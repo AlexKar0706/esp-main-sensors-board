@@ -1,0 +1,5 @@
+## IDF Component Manager Manifest File
+
+dependencies:
+  esp32_s3_lcd_ev_board:
+    version: '*'
