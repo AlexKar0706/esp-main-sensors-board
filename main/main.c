@@ -1,4 +1,4 @@
-/*  WiFi softAP Example
+/*  WiFi softAP implementation of example, adapted from the original example code in esp-idf
 
    This example code is in the Public Domain (or CC0 licensed, at your option.)
 

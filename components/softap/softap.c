@@ -1,4 +1,4 @@
-/*  WiFi softAP Example
+/*  WiFi softAP implementation of example, adapted from the original example code in esp-idf
 
    This example code is in the Public Domain (or CC0 licensed, at your option.)
 
@@ -16,22 +16,6 @@
 
 #include "lwip/err.h"
 #include "lwip/sys.h"
-
-/* The examples use WiFi configuration that you can set via project configuration menu.
-
-   If you'd rather not, just change the below entries to strings with
-   the config you want - ie #define EXAMPLE_WIFI_SSID "mywifissid"
-*/
-#define EXAMPLE_ESP_WIFI_SSID      CONFIG_ESP_WIFI_SSID
-#define EXAMPLE_ESP_WIFI_PASS      CONFIG_ESP_WIFI_PASSWORD
-#define EXAMPLE_ESP_WIFI_CHANNEL   CONFIG_ESP_WIFI_CHANNEL
-#define EXAMPLE_MAX_STA_CONN       CONFIG_ESP_MAX_STA_CONN
-
-#if CONFIG_ESP_GTK_REKEYING_ENABLE
-#define EXAMPLE_GTK_REKEY_INTERVAL CONFIG_ESP_GTK_REKEY_INTERVAL
-#else
-#define EXAMPLE_GTK_REKEY_INTERVAL 0
-#endif
 
 static const char *TAG = "wifi softAP";
 
@@ -66,11 +50,11 @@ void wifi_init_softap(void)
 
     wifi_config_t wifi_config = {
         .ap = {
-            .ssid = EXAMPLE_ESP_WIFI_SSID,
-            .ssid_len = strlen(EXAMPLE_ESP_WIFI_SSID),
-            .channel = EXAMPLE_ESP_WIFI_CHANNEL,
-            .password = EXAMPLE_ESP_WIFI_PASS,
-            .max_connection = EXAMPLE_MAX_STA_CONN,
+            .ssid = CONFIG_ESP_WIFI_SSID,
+            .ssid_len = strlen(CONFIG_ESP_WIFI_SSID),
+            .channel = CONFIG_ESP_WIFI_CHANNEL,
+            .password = CONFIG_ESP_WIFI_PASSWORD,
+            .max_connection = CONFIG_ESP_MAX_STA_CONN,
 #ifdef CONFIG_ESP_WIFI_SOFTAP_SAE_SUPPORT
             .authmode = WIFI_AUTH_WPA3_PSK,
             .sae_pwe_h2e = WPA3_SAE_PWE_BOTH,
@@ -86,10 +70,14 @@ void wifi_init_softap(void)
                 .protected_keep_alive = 1,
             },
 #endif
-            .gtk_rekey_interval = EXAMPLE_GTK_REKEY_INTERVAL,
+#if CONFIG_ESP_GTK_REKEYING_ENABLE
+            .gtk_rekey_interval = CONFIG_ESP_GTK_REKEY_INTERVAL,
+#else
+            .gtk_rekey_interval = 0,
+#endif
         },
     };
-    if (strlen(EXAMPLE_ESP_WIFI_PASS) == 0) {
+    if (strlen(CONFIG_ESP_WIFI_PASSWORD) == 0) {
         wifi_config.ap.authmode = WIFI_AUTH_OPEN;
     }
 
@@ -98,7 +86,7 @@ void wifi_init_softap(void)
     ESP_ERROR_CHECK(esp_wifi_start());
 
     ESP_LOGI(TAG, "wifi_init_softap finished. SSID:%s password:%s channel:%d",
-             EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS, EXAMPLE_ESP_WIFI_CHANNEL);
+             CONFIG_ESP_WIFI_SSID, CONFIG_ESP_WIFI_PASSWORD, CONFIG_ESP_WIFI_CHANNEL);
 }
 
 void softap_init(void)
