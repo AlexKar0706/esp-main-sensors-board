@@ -34,8 +34,24 @@
 #define EXAMPLE_HTTP_QUERY_KEY_MAX_LEN  (64)
 
 #define CSV_DATA_LINES       36000 /* 36000 lines of data for 1 hour of measurements with 100ms interval */
+
+#if (SENSORS_DATA_TYPE == SENSORS_DATA_TYPE_MM)
+
+#define CSV_METADATA_STRING "Boot Time(ms),ToF(mm),US(mm),IR(mm),Cm(id),Cm(score)\n"
+#define CSV_DATA_LINE_FORMAT "%7d,%4d,%4d,%4d,%1d,%.4f\n"
+#define CSV_DATA_STRUCT_DATA sensors_data->tof_mm, sensors_data->us_mm, sensors_data->ir_mm, sensors_data->camera_id, sensors_data->camera_score
 #define CSV_DATA_LINE_LENGTH 32 /* 7 digits timestamp + ToF(mm) 4 digits + Ultrasonic(mm) 4 digits + IR(mm) 4 digits + Camera(id) 1 digit + Camera(score) 6 digits + ',' for separation + '\n' */
 #define CSV_DATA_META        53 /* "Boot Time(ms),ToF(mm),US(mm),IR(mm),Cm(id),Cm(score)\n" */
+
+#elif (SENSORS_DATA_TYPE == SENSORS_DATA_TYPE_ID)
+
+#define CSV_METADATA_STRING "Boot Time(ms),ToF(id),US(id),IR(id),Cm(id),Cm(score)\n"
+#define CSV_DATA_LINE_FORMAT "%7d,%1d,%1d,%1d,%1d,%.4f\n"
+#define CSV_DATA_STRUCT_DATA sensors_data->tof_id, sensors_data->us_id, sensors_data->ir_id, sensors_data->camera_id, sensors_data->camera_score
+#define CSV_DATA_LINE_LENGTH 23 /* 7 digits timestamp + ToF(id) 1 digit + Ultrasonic(id) 1 digit + IR(id) 1 digit + Camera(id) 1 digit + Camera(score) 6 digits + ',' for separation + '\n' */
+#define CSV_DATA_META        53 /* "Boot Time(ms),ToF(id),US(id),IR(id),Cm(id),Cm(score)\n" */
+
+#endif
 
 /* A simple example that demonstrates how to create GET and POST
  * handlers for the web server.
@@ -139,7 +155,7 @@ static httpd_handle_t start_webserver(void)
         return NULL;
     }
     csv_data[0] = '\0'; // Initialize the string to be empty
-    strcpy(csv_data, "Boot Time(ms),ToF(mm),US(mm),IR(mm),Cm(id),Cm(score)\n");
+    strcpy(csv_data, CSV_METADATA_STRING);
     csv_data_index = CSV_DATA_META;
 
     /* This is a workaround to avoid heap fragmentation in case of PSRAM enabled devices when the server is started before Wi-Fi connection is established. */
@@ -222,8 +238,8 @@ void put_sensors_data_to_csv(sensor_data_t* sensors_data)
 {
     xSemaphoreTake(csv_data_mutex, portMAX_DELAY);
     if ((csv_data_index + CSV_DATA_LINE_LENGTH) < (CSV_DATA_META + CSV_DATA_LINES * CSV_DATA_LINE_LENGTH)) {
-        int len = snprintf(csv_data + csv_data_index, CSV_DATA_LINE_LENGTH + 1, "%7d,%4d,%4d,%4d,%1d,%.4f\n", 
-            (int)esp_timer_get_time() / 1000, sensors_data->tof_mm, sensors_data->us_mm, sensors_data->ir_mm, sensors_data->camera_id, sensors_data->camera_score);
+        int len = snprintf(csv_data + csv_data_index, CSV_DATA_LINE_LENGTH + 1, CSV_DATA_LINE_FORMAT, 
+            (int)esp_timer_get_time() / 1000, CSV_DATA_STRUCT_DATA);
         if (len < 0) {
             ESP_LOGE(TAG, "Failed to write data to CSV buffer");
             return;
